@@ -1,0 +1,259 @@
+---
+title: "Regresión lineal multiple"
+author: "Genoveva Serrano Fernández"
+date: "2024-03-23"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+##1.Cargue el fichero “spears.xls”
+```{r echo=TRUE}
+library(readxl)
+spear <- read_excel("C:/Regresion lineal multiple/spear.xlsx")
+View(spear)
+
+spear<- as.data.frame(read_excel("C:/Regresion lineal multiple/spear.xlsx"))
+  spear
+```
+
+##2.Realice un análisis exploratorio de las variables. Comente brevemente los resultados.
+```{r echo=TRUE}
+options(scipen = 999)
+library(dplyr)
+library(ggplot2) 
+library(readxl)
+library(gmodels)
+library(Hmisc)
+library(ggthemes)
+library(tidyverse)
+library(datos)
+library(tidyr)
+
+spear <- data.frame(
+  id = 1:10,
+ Maxle = c(18.936, 22.176, 22.104, 28.224, 18.720, 21.600, 23.472, 30.816, 30.456, 27.864),
+  Socle = c(5.544, 6.408, 6.840, 7.848, 3.456, 2.664, 3.960, 4.032, 4.752, 6.624),
+  Maxwi = c(25.416, 31.320, 28.800, 14.544, 29.160, 21.960, 33.624, 28.800, 33.048, 29.376),
+  Upsoc = c(23.400, 26.856, 25.344, 28.224, 20.880, 21.600, 28.440, 30.816, 30.456, 32.688),
+  Losoc = c(4.608, 6.408, 6.840, 7.848, 3.456, 2.664, 3.960, 4.032, 4.752, 6.624),
+  Maxwit = c(45.000, 49.320, 51.120, 53.280, 42.480, 37.440, 53.136, 61.560, 53.784, 55.080),
+  Weight = c(4.752, 9.576, 6.912, 7.776, 3.528, 2.376, 8.424, 9.072, 11.664, 7.344))
+
+#Preguntas para el estudios: ¿Qué tipo de variación existe dentro de cada una de mis variables?¿Qué tipo de covariación ocurre entre mis diferentes variables?
+#Distribucion en diagrama de cajas
+
+spear_long <- gather(spear, key = "Variable", value = "Valor", -id)
+
+ggplot(spear_long, aes(x = Variable, y = Valor)) +
+  geom_boxplot(fill = "lightblue", color = "blue") +
+  labs(x = "Variable", y = "Valor", title = "Diagrama de Cajas") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#Grafico de barras
+ggplot(spear_long, aes(x = Variable, y = Valor, fill = Variable)) +
+  geom_bar(stat = "identity") +
+  labs(x = "Variable", y = "Valor", title = "Gráfico de Barras") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+#Histogramas de variable
+  Maxle <- "Maxle"
+  Socle <- "Socle"
+  Maxwi <- "Maxwi"
+  Upsoc <- "Upsoc"
+  Losoc <- "Losoc"
+  Maxwit <- "Maxwit"
+  Weight <- "Weight"
+  
+ggplot(spear, aes(x = !!as.symbol("Maxle"))) +
+  geom_histogram(binwidth = 2, fill = "lightblue", color = "black") +
+  labs(x = "Maxle", y = "Frecuencia", title = "Histograma de la Variable") +
+  theme_minimal()
+
+ggplot(spear, aes(x = !!as.symbol("Socle"))) +
+  geom_histogram(binwidth = 2, fill = "blue", color = "black") +
+  labs(x = "Socle", y = "Frecuencia", title = "Histograma de la Variable") +
+  theme_minimal()
+
+ggplot(spear, aes(x = !!as.symbol("Maxwi"))) +
+  geom_histogram(binwidth = 2, fill = "pink", color = "black") +
+  labs(x = "Maxwi", y = "Frecuencia", title = "Histograma de la Variable") +
+  theme_minimal()
+
+ggplot(spear, aes(x = !!as.symbol("Upsoc"))) +
+  geom_histogram(binwidth = 2, fill = "yellow", color = "black") +
+  labs(x = "Upsoc", y = "Frecuencia", title = "Histograma de la Variable") +
+  theme_minimal()
+
+ggplot(spear, aes(x = !!as.symbol("Losoc"))) +
+  geom_histogram(binwidth = 2, fill = "orange", color = "black") +
+  labs(x = "Losoc", y = "Frecuencia", title = "Histograma de la Variable") +
+  theme_minimal()
+
+ggplot(spear, aes(x = !!as.symbol("Maxwit"))) +
+  geom_histogram(binwidth = 2, fill = "red", color = "black") +
+  labs(x = "Maxwit", y = "Frecuencia", title = "Histograma de la Variable") +
+  theme_minimal()
+
+ggplot(spear, aes(x = !!as.symbol("Weight"))) +
+  geom_histogram(binwidth = 2, fill = "purple", color = "black") +
+  labs(x = "Weight", y = "Frecuencia", title = "Histograma de la Variable") +
+  theme_minimal()
+
+```
+
+##3.Verifique los supuestos que han de cumplir las variables implicadas en un análisis de la regresión lineal múltiple. Comente los resultados.
+##4.Visualice la distribución de frecuencia de las variables.
+```{r echo=TRUE}
+frecuencia <- gather(spear, key = "Variable", value = "Valor", -id)
+
+ggplot(frecuencia, aes(x = Valor)) +
+  geom_histogram(binwidth = 2, fill = "cyan", color = "black") +
+  facet_wrap(~ Variable, scales = "free") +
+  labs(x = "Valor", y = "Frecuencia", title = "Distribución de Frecuencia de las Variables") +
+  theme_minimal()
+```
+
+##5.¿Qué valores ha de registrar la prueba de Shapiro-Wilk para indicar que se trata de una variable con distribución normal?
+Los valores que han de registrar en esta prueba en el caso de una variable con distribucion normal deben ser mayores que el nivel de significancia, normalmente 0.05.
+
+##6.¿Como verificaría el supuesto de linealidad?
+Por ejemplo, para visualizar la relacion entre las variables podriamos elaborar un grafico de dispersion, pudiendo incluso analizar y graficar posteriormente los valores de residuos. Ambos diagramos nos permitirian observar si los datos de la tabla cumplen una distribución lineal o no.
+```{r echo= TRUE}
+En primer lugar, antes de examinar la relacion entre las variables, deberemos de ajustar el modelo de regresion lineal. 
+
+modelo <- lm(Maxle ~ Socle + Maxwi + Upsoc + Losoc + Maxwit + Weight, data = spear)
+
+Luego obtenemos los residuos
+
+residuos <- residuals(modelo)
+
+A continuacion,realizamos diagramas de dispersion de comparacion entre variables_continuas
+
+  Maxle <- "Maxle"
+  Socle <- "Socle"
+  Maxwi <- "Maxwi"
+  Upsoc <- "Upsoc"
+  Losoc <- "Losoc"
+  Maxwit <- "Maxwit"
+  Weight <- "Weight"
+       
+par(mfrow = c(2, 3))  
+for (var in names(spear)[-1]) {  
+  plot(spear[[var]], spear$Maxle, main = paste("Diagrama de dispersión de Maxle", var),
+       xlab = var, ylab = "Maxle", col = "pink")
+}
+
+for (var in names(spear)[-1]) {  
+  plot(spear[[var]], spear$Socle, main = paste("Diagrama de dispersión de Socle", var),
+       xlab = var, ylab = "Socle", col = "blue")
+}
+
+for (var in names(spear)[-1]) {  
+  plot(spear[[var]], spear$Maxwi, main = paste("Diagrama de dispersión de Maxwi", var),
+       xlab = var, ylab = "Maxwi", col = "darkgreen")
+}
+
+for (var in names(spear)[-1]) {  
+  plot(spear[[var]], spear$Upsoc, main = paste("Diagrama de dispersión de Upsoc", var),
+       xlab = var, ylab = "Upsoc", col = "orange")
+}
+
+for (var in names(spear)[-1]) {  
+  plot(spear[[var]], spear$Losoc, main = paste("Diagrama de dispersión de Losoc", var),
+       xlab = var, ylab = "Losoc", col = "purple")
+}
+
+for (var in names(spear)[-1]) {  
+  plot(spear[[var]], spear$Maxwit, main = paste("Diagrama de dispersión de Maxwit", var),
+       xlab = var, ylab = "Maxwit", col = "brown")
+}
+
+for (var in names(spear)[-1]) {  
+  plot(spear[[var]], spear$Weight, main = paste("Diagrama de dispersión de Weight", var),
+       xlab = var, ylab = "Weight", col = "red")
+}
+
+Ahora se grafican los residuos y los valores ajustados de la variables_continuas
+
+plot(fitted(modelo), residuos, main = "Residuos vs. Valores Ajustados",
+     xlab = "Valores Ajustados", ylab = "Residuos", col = "magenta")
+abline(h = 0, col = "black")
+              
+              
+```
+La distribucion de todas las variables suguiere que la relación entre la variable dependiente y las variables independientes es lineal y que los residuos tienen una distribución constante y homocedástica.
+
+##7.Visualice la matriz de dispersión entre variables para averiguar la intensidad de la relación entre dos variables.
+```{r echo=TRUE}
+Para visualizar la matriz haremos uso de la funcion pairs() junto con la librería psych. Generará una matriz de dispersión que muestra la relación entre todas las variables.
+
+library(psych)
+pairs(spear[-1])
+```
+##8. y visualice las variables que mayor correlación poseen en una nueva matriz de dispersión.
+```{r echo=TRUE}
+Para ello en primer lugar debo hacer la matriz de correlacion:
+  
+ matriz_correlacion <- cor(spear[, -1])
+
+Luego tengo que encontrar las variables con mayor correlacion:
+  
+mayor_correlacion <- which(matriz_correlacion == max(matriz_correlacion[upper.tri(matriz_correlacion)]), arr.ind = TRUE)
+
+Extraigo las variables con mayor correlacion:
+
+Variable1 <- rownames(matriz_correlacion)[mayor_correlacion[1, 1]]
+Variable2 <- colnames(matriz_correlacion)[mayor_correlacion[1, 2]]
+
+Y para visualizar los resultados, creo una matriz de dispersion:
+  
+pairs(spear[c(Variable1, Variable2)])
+```
+##9.Realice la prueba de correlación lineal de Pearson. Comente los valores arrojados por los distintos coeficiente que arroja esta prueba.
+```{r echo=TRUE}
+
+Pearson <- cor.test(spear$Maxle, spear$Socle, method = "pearson")
+print(Pearson)
+```
+##10.¿Qué nos indica el p-value?
+Es el indice que indica si la correlación entre las variables podría ser el resultado del azar. Al ser la prueba de Pearson realizada sobre un nivel de significancia del 95%, el p value indicaría dentro de ese 5% restante si el resultado es azar, siempre y cuando el pvalue sea mayor a 0.05, como es nuestro caso.
+
+##11.Defina brevemente “nivel de significancia”.
+Es un valor predefinido que se asigna en pruebas de hipótesis estadísticas para corroborar la validez de una afirmación. Es como tal la probabilidad de cometer un error de tipo I al rechazar la hipótesis nula cuando es verdadera.
+
+##12.¿Cuáles son la hipótesis planteadas en esta prueba (Pearson)?
+Las hipotesis planteadas en esta prueba son dos: 
+
+Hipótesis nula (H0): No hay una correlación lineal significativa entre las variables Maxle y Socle.
+
+Hipótesis alternativa (H1): Existe una correlación lineal significativa entre las variables Maxle y Socle.
+##13.¿Qué quiere decir “Subset selection”? ¿Qué importancia tiene en la regresión lineal múltiple?
+##14.Dígame una estrategia eficaz en el contexto de “Subset Selection”.
+##15.Defina “modelo anidado”.
+##16.¿Qué es una iteración?
+##17.¿Qué mide el error de entrenamiento?
+##18.¿En qué consiste la estrategia “stepwise”? Implemente dicha estrategia en sus 3 vertientes.
+##19.Evalúe los modelos creados en base al Criterio de Información de Akaike.
+##20.¿Cuándo ingresa una variable en el modelo? Justifique su respuesta.
+##21.Ejecute un modelo con las variables que posean una mayor significancia.
+##22.Calculad la varianza del modelo.
+##23.Calculad los intervalos de confianza de los coeficientes del modelo lineal previamente calculado. Interprete los resultados.
+##24.Visualice en un grafico de dispersión 3D el modelo lineal.
+##25.Añada el plano de regresión lineal en un gráfico 3D. Interprete los resultados.
+##26.Valide la robustez del modelo lineal.
+##27.Verifique que se cumplen las condiciones del modelo de regresión lineal múltiple. Justifique su respuesta.
+##28.¿Emplearía el Factor de Inflación de la Varianza para verificar alguno de las condiciones? Si es así diga cual.
+##29.Defina parsimonia.
+##30.Verifique la normalidad de los residuos. Dígame la diferencia entre residuos, residuos estandarizados y residuos estudentizados.
+##31.¿Cómo interpretaría el test de Breusch-Pagan?
+##32.Verifique si existen o no observaciones influyentes.
+##33.Diferencia entre observación atípica y observación que produzca “apalancamiento” del modelo.
+##34.Calcule la distancia de Cook. ¿Cómo viene expresada? ¿Cómo la interpretaría?
+##35.¿Qué valores hat superan la media?
+##36.¿Como calcularía el límite hat que determina que observaciones son influyentes?
+##37.Elimine las observaciones influyentes del modelo y repetir todo el proceso comprobando el peso de esta observación en la regresión lineal. Comente brevemente los resultados.
