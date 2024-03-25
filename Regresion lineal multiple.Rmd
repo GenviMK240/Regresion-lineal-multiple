@@ -240,21 +240,162 @@ El "Subset selection" en la regresión múltiple es usado para seleccionar un su
 La importancia de este radica en que es lo que permite identificar las variables más relevantes que contribuyen  a explicar la variabilidad en la variable dependiente. Basicamente, al seleccional personalmente los subconjuntos de variables independientes, lo que estamos haciendo es simplificar el modelo evitando la inclusion de variables redundantes o no utiles, mejorando y facilitando así la interpretabilidad del modelo. 
 
 ##14.Dígame una estrategia eficaz en el contexto de “Subset Selection”.
+Las estrategias eficaces deben usar criterios de selección adecuados para evaluar y comparar los diferentes subconjuntos. Uno de los ejemplo de criterio más común es el criterio de información de Akaike (AIC). Este criterio se lleva a cabo siguiendo estos pasos:
+
+1.Generar un modelo con todos los posibles subconjuntos. Para ellos ya tenemos elaborado nuestro dataframe:
+```{r echo=TRUE}
+spear <- data.frame(
+  id = 1:10,
+ Maxle = c(18.936, 22.176, 22.104, 28.224, 18.720, 21.600, 23.472, 30.816, 30.456, 27.864),
+  Socle = c(5.544, 6.408, 6.840, 7.848, 3.456, 2.664, 3.960, 4.032, 4.752, 6.624),
+  Maxwi = c(25.416, 31.320, 28.800, 14.544, 29.160, 21.960, 33.624, 28.800, 33.048, 29.376),
+  Upsoc = c(23.400, 26.856, 25.344, 28.224, 20.880, 21.600, 28.440, 30.816, 30.456, 32.688),
+  Losoc = c(4.608, 6.408, 6.840, 7.848, 3.456, 2.664, 3.960, 4.032, 4.752, 6.624),
+  Maxwit = c(45.000, 49.320, 51.120, 53.280, 42.480, 37.440, 53.136, 61.560, 53.784, 55.080),
+  Weight = c(4.752, 9.576, 6.912, 7.776, 3.528, 2.376, 8.424, 9.072, 11.664, 7.344))
+
+ Maxle <- "Maxle"
+  Socle <- "Socle"
+  Maxwi <- "Maxwi"
+  Upsoc <- "Upsoc"
+  Losoc <- "Losoc"
+  Maxwit <- "Maxwit"
+  Weight <- "Weight"
+```
+
+
+2.Ajustamos el modelo de regresion lineal para cada una de las variables independientes: 
+
+```{r echo=TRUE}
+modelo <- lm(Maxle ~ Socle + Maxwi + Upsoc + Losoc + Maxwit + Weight, data = spear)
+
+ y obtenemos el numero de parametros estimados
+
+num_parametros <- length(coef(modelo))
+
+tambien el calculo del logaritmo de verosimilitud
+
+log_verosimilitud <- logLik(modelo)
+```
+
+3.Evaluación de modelos calculando el AIC para cada uno. Esto premia al ajuste del modelo de datos, cuanto menor sea el AIC, mejor es el modelo. El calculo se realiza en base a esta formula AIC=2k−2ln(L^), siendo k el número de parámetros estimados en el modelo y L la función de verosimilitud del modelo, que mide el cómo el modelo se ajusta a los datos.
+```{r echo=TRUE}
+
+AIC <- 2 * num_parametros - 2 * log_verosimilitud
+```
+
+4.Selección del mejor modelo en base al AIC mas bajo.
+```{r echo=TRUE}
+print(AIC)
+```
+El (df=8) proporciona información sobre el ajuste del modelo a los datos observados y la complejidad del modelo, al ser valor 8, este se considera bastante alto, por lo que el modelo tiene una buena capacidad de ajuste a los datos observados.
+
 ##15.Defina “modelo anidado”.
+Un "modelo anidado" es una relación entre dos modelos estadísticos donde uno de ellos se considera una versión  especial del otro modelo. Un modelo se considera anidado dentro de otro si los parámetros del primer modelo son un subconjunto de los parámetros del segundo modelo y si el primer modelo puede ser obtenido del segundo modelo imponiendo restricciones adicionales en los parámetros.
+
 ##16.¿Qué es una iteración?
+Una itineracion se refiere a un proceso en el que se realizan secuencias de operaciones o calculos de manera repetitiva con el fin de lograr un resultado deseado.
+
+Extrapolado a la estadistica pordriamos decir que la itineracion es el proceso usado para estimar los parametros de un modelo estadistico, por lo general encontrando soluciones a problemas en los modelos cuando estos no pueden ser resuelto mediante metodos numericos estandar o que estos modelos no proporcionen soluciones analiticas directas. Todo esto a base de calculos o ajustes repetitivos hasta alcanzar esa solucion.
+
 ##17.¿Qué mide el error de entrenamiento?
+Por lo general el error de entrenamiento mide la discrepancia entre las predicciones del modelo y los valores reales observados en el conjunto de datos de entrenamiento.
+
 ##18.¿En qué consiste la estrategia “stepwise”? Implemente dicha estrategia en sus 3 vertientes.
+Consiste en identificar un conjunto óptimo de predictores que maximicen la capacidad predictiva del modelo a traves de agregar o eliminar variables del modelo iterativamente, evaluando el impacto en la calidad del ajuste del modelo cada vez que se le realiza algun cambio. 
+Esta estrategia posee tres vertientes:
+1.Forward stepwise: Comienza con un modelo vacío al que se le agrega una serie de variables a la vez, eligiendo la variable que proporciona incremento en la calidad del ajuste del modelo en cada paso.
+```{r echo=TRUE}
+modelo <- lm(Maxle ~ Socle + Maxwi + Upsoc + Losoc + Maxwit + Weight, data = spear)
+
+modelo_forward <- stepAIC(modelo, direction = "forward", data = spear)
+
+```
+2.Backward stepwise: Comienza con un modelo con todas sus variables y luego se elimina secuencialmente una variable a la vez, eligiendo la variable la cual su eliminacion no repercute en mucha medida la calidad del ajuste del modelo.
+```{r echo=TRUE}
+modelo_backward <- stepAIC(modelo, direction = "backward", data = spear)
+```
+3.Stepwise bidireccional: Combina los enfoques de las dos vertientes anteriores, realizando agregaciones o eliminaciones de variables según la mejora en la calidad del ajuste del modelo.
+```{r}
+modelo_bidireccional <- stepAIC(modelo, direction = "both", data = spear)
+```
+Y ahora mostramos el resultado de los modelos finales:
+```{r echo=TRUE}
+print(summary(modelo_forward))
+print(summary(modelo_backward))
+print(summary(modelo_bidireccional))
+```
 ##19.Evalúe los modelos creados en base al Criterio de Información de Akaike.
+Para evaluarlos haremos uso de la funcion AIC:
+```{r}
+Obtenemos los valores AIC para cada modelo:
+  
+aic_forward <- AIC(modelo_forward)
+aic_backward <- AIC(modelo_backward)
+aic_bidireccional <- AIC(modelo_bidireccional)
+
+Y luego vamos a mostrarlos:
+print(aic_forward)
+print(aic_backward)
+print(aic_bidireccional)
+```
 ##20.¿Cuándo ingresa una variable en el modelo? Justifique su respuesta.
 ##21.Ejecute un modelo con las variables que posean una mayor significancia.
+```{r echo=TRUE}
+Realizamos un modelo inicial:
+  
+modelo <- lm(Maxle ~ Socle + Maxwi + Upsoc + Losoc + Maxwit + Weight, data = spear)
+
+Obtenemos los p-value de cada variable:
+  p_valores <- summary(modelo)$coef[, "Pr(>|t|)"]
+
+Seleccionamos las variables mas significativas, o sea, las de p-value menos a 0.05:
+  variables_significativas <- names(p_valores[p_valores < 0.05])
+
+Y ahora creamos el modelo con las variables significativas:
+modelo_subset <- data.frame(Weight = spear$Weight, spear[, variables_significativas])
+modelo_significancia <- lm(Maxle ~ ., data = modelo_subset)
+
+Por ultimo usamos el resumen con el resultado final:
+  print(summary(modelo_significancia))
+
+```
 ##22.Calculad la varianza del modelo.
+```{r}
+varianza <- summary(modelo_significancia)$sigma^2
+
+print(varianza)
+```
 ##23.Calculad los intervalos de confianza de los coeficientes del modelo lineal previamente calculado. Interprete los resultados.
+Clculamos los intervalos de confianza con la funcion confint():
+```{r echo=TRUE}
+intervalos_confianza <- confint(modelo_significancia)
+print(intervalos_confianza)
+```
 ##24.Visualice en un grafico de dispersión 3D el modelo lineal.
+```{r echo=TRUE}
+library(scatterplot3d)
+modelo_subset <- data.frame(Weight = spear$Weight, spear[, variables_significativas])
+summary(modelo_subset)
+print(modelo_subset$Weight)
+modelo_subset$Socle <- as.numeric(modelo_subset$Socle)
+modelo_subset$Maxwi <- as.numeric(modelo_subset$Maxwi)
+modelo_subset$Weight <- as.numeric(modelo_subset$Weight)
+
+scatterplot3d(modelo_subset$Socle, modelo_subset$Maxwi, modelo_subset$Weight, 
+              xlab = "Socle", ylab = "Maxwi", zlab = "Weight",
+              main = "Modelo Lineal en 3D")
+
+regression_plane <- lm(Weight ~ Socle + Maxwi, data = modelo_subset)
+plane3d(regression_plane, col = "blue")
+```
+
 ##25.Añada el plano de regresión lineal en un gráfico 3D. Interprete los resultados.
 ##26.Valide la robustez del modelo lineal.
 ##27.Verifique que se cumplen las condiciones del modelo de regresión lineal múltiple. Justifique su respuesta.
 ##28.¿Emplearía el Factor de Inflación de la Varianza para verificar alguno de las condiciones? Si es así diga cual.
 ##29.Defina parsimonia.
+Este término hace referencia a que el mejor modelo es aquel capaz de explicar con mayor precisión la variabilidad observada en la variable respuesta empleando el menor número de predictores, por lo tanto, con menos asunciones.
 ##30.Verifique la normalidad de los residuos. Dígame la diferencia entre residuos, residuos estandarizados y residuos estudentizados.
 ##31.¿Cómo interpretaría el test de Breusch-Pagan?
 ##32.Verifique si existen o no observaciones influyentes.
