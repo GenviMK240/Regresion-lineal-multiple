@@ -353,8 +353,9 @@ Seleccionamos las variables mas significativas, o sea, las de p-value menos a 0.
   variables_significativas <- names(p_valores[p_valores < 0.05])
 
 Y ahora creamos el modelo con las variables significativas:
-modelo_subset <- data.frame(Weight = spear$Weight, spear[, variables_significativas])
-modelo_significancia <- lm(Maxle ~ ., data = modelo_subset)
+modelo_subset <- data.frame(Weight = spear$Weight, Maxle = spear$Maxle, Socle= spear$Socle, Maxwi = spear$Maxwi, Upsoc = spear$Upsoc, Losoc = spear$Losoc, Maxwit = spear$Maxwit, spear[, variables_significativas])
+
+modelo_significancia <- lm(Weight ~ Socle + Maxwi + Upsoc + Losoc + Maxwit + Maxle, data = modelo_subset)
 
 Por ultimo usamos el resumen con el resultado final:
   print(summary(modelo_significancia))
@@ -375,32 +376,105 @@ print(intervalos_confianza)
 ##24.Visualice en un grafico de dispersión 3D el modelo lineal.
 ```{r echo=TRUE}
 library(scatterplot3d)
-modelo_subset <- data.frame(Weight = spear$Weight, spear[, variables_significativas])
-summary(modelo_subset)
-print(modelo_subset$Weight)
-modelo_subset$Socle <- as.numeric(modelo_subset$Socle)
-modelo_subset$Maxwi <- as.numeric(modelo_subset$Maxwi)
-modelo_subset$Weight <- as.numeric(modelo_subset$Weight)
 
 scatterplot3d(modelo_subset$Socle, modelo_subset$Maxwi, modelo_subset$Weight, 
               xlab = "Socle", ylab = "Maxwi", zlab = "Weight",
-              main = "Modelo Lineal en 3D")
-
-regression_plane <- lm(Weight ~ Socle + Maxwi, data = modelo_subset)
-plane3d(regression_plane, col = "blue")
+              main = "Modelo en 3D", color = "magenta")
 ```
+##25.Añada el plano de regresión lineal en un gráfico 3D. Interprete los resultados. (ESTA NO ESTÁ BIEN)
+```{r echo=TRUE}
+library(scatterplot3d)
 
-##25.Añada el plano de regresión lineal en un gráfico 3D. Interprete los resultados.
-##26.Valide la robustez del modelo lineal.
+Socle <- as.numeric(modelo_subset$Socle)
+Maxwi <- as.numeric(modelo_subset$Maxwi)
+Weight <- as.numeric(modelo_subset$Weight)
+
+# Ajustar un modelo lineal
+modelo_plano_regresion <- lm(Weight ~ Socle + Maxwi, data = modelo_subset)
+
+# Cargar la librería scatterplot3d
+library(scatterplot3d)
+
+# Crear el gráfico en 3D
+grafico <- scatterplot3d(Socle, Maxwi, Weight, 
+              xlab = "Socle", ylab = "Maxwi", zlab = "Weight",
+              main = "Modelo en 3D", color = "magenta")
+
+coeficientes <- coef(modelo_plano_regresion)
+
+ plano_regresion <- rgl::planes3d(coeficientes[2], coeficientes[3], -1, coeficientes[1], alpha = 0.5, color = "blue")
+ print(plano_regresion)
+```
+##26. Valide la robustez del modelo lineal.
+```{r}
+1. Análisis de residuos
+Grafico de residuos vs valores ajustados con un histograma donde se muestren dichos residuos
+
+plot(modelo, which = 1)
+
+ggplot(data = as.data.frame(residuals(modelo)), aes(x = residuals(modelo))) +
+  geom_histogram(binwidth = 1, fill = "magenta", color = "black") +
+  ggtitle("Histograma de Residuos") +
+  xlab("Residuos") +
+  ylab("Frecuencia") +
+  theme_minimal()
+
+ggplot(data = as.data.frame(residuals(modelo)), aes(sample = residuals(modelo))) +
+  geom_qq() +
+  geom_abline(intercept = 0, slope = 1, color = "purple") +
+  ggtitle("Plot de Residuos") +
+  theme_minimal()
+
+2. Diagnóstico de multicolinealidad: Calculando el VIF.
+vif(modelo)
+
+3. Validación cruzada
+library(caret)
+set.seed(123) # Fijar semilla para reproducibilidad
+train_control <- trainControl(method = "cv", number = 5) # Definir control de entrenamiento
+modelo_vc <- train(Maxle ~ Socle + Maxwi + Upsoc + Weight, data = spear, method = "lm", trControl = train_control)
+print(summary(modelo_vc))
+
+4. Pruebas de hipótesis
+summary(modelo)
+
+```
 ##27.Verifique que se cumplen las condiciones del modelo de regresión lineal múltiple. Justifique su respuesta.
 ##28.¿Emplearía el Factor de Inflación de la Varianza para verificar alguno de las condiciones? Si es así diga cual.
 ##29.Defina parsimonia.
-Este término hace referencia a que el mejor modelo es aquel capaz de explicar con mayor precisión la variabilidad observada en la variable respuesta empleando el menor número de predictores, por lo tanto, con menos asunciones.
+La parsimonia hace referencia a que el mejor modelo es aquel capaz de explicar con mayor precisión la variabilidad  en la variable respuesta empleando empleando la menor cantidad posible de asunciones.
 ##30.Verifique la normalidad de los residuos. Dígame la diferencia entre residuos, residuos estandarizados y residuos estudentizados.
+```{r}
+Verificacion de residuos:
+  qqnorm(resid(modelo), col = "magenta")
+  qqline(resid(modelo), col = "black")
+```
+Residuos: Son las diferencias entre los valores observados y los valores predichos por el modelo de regresión, como tal representan el error de predicción del modelo.
+
+Residuos estandarizados: Son los residuos divididos por su desviación estándar, por lo que se usan para evaluar la magnitud de los errores de predicción en relacion a la variabilidad del modelo.
+
+Residuos estudentizados: Son los residuos divididos por su error estándar. Se utilizan para identificar observaciones atípicas o influyentes en el modelo de regresión. 
+
 ##31.¿Cómo interpretaría el test de Breusch-Pagan?
+La prueba de Breusch-Pagan evalúa si la varianza de los errores es constante o no. 
+La interpretacion de este test seria de la siguiente manera:
+
+Si el valor p asociado al test es menor que el nivel de significancia (o.o5)), concluimos que hay evidencia de heterocedasticidad en el modelo.
+
+Si el valor p es mayor, concluimos que no hay suficiente evidencia para afirmar que hay heterocedasticidad.
+
+```{r echo=TRUE}
+library(lmtest)
+breusch_test <- lmtest::bptest(modelo)
+print(breusch_test)
+```
+
 ##32.Verifique si existen o no observaciones influyentes.
 ##33.Diferencia entre observación atípica y observación que produzca “apalancamiento” del modelo.
 ##34.Calcule la distancia de Cook. ¿Cómo viene expresada? ¿Cómo la interpretaría?
 ##35.¿Qué valores hat superan la media?
 ##36.¿Como calcularía el límite hat que determina que observaciones son influyentes?
 ##37.Elimine las observaciones influyentes del modelo y repetir todo el proceso comprobando el peso de esta observación en la regresión lineal. Comente brevemente los resultados.
+```{r}
+
+```
