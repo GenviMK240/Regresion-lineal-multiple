@@ -232,7 +232,13 @@ Las hipotesis planteadas en esta prueba son dos:
 Hipótesis nula (H0): No hay una correlación lineal significativa entre las variables Maxle y Socle.
 
 Hipótesis alternativa (H1): Existe una correlación lineal significativa entre las variables Maxle y Socle.
+
 ##13.¿Qué quiere decir “Subset selection”? ¿Qué importancia tiene en la regresión lineal múltiple?
+
+El "Subset selection" en la regresión múltiple es usado para seleccionar un subconjunto de variables independientes que se utilizarán en el modelo de regresión. Consiste principalmente en evaluar todas las combinaciones posibles de las variables independientes y  que proporcionen elesoger las que mejor ajuste al modelo en función de algún criterio sleccionado previamente.
+
+La importancia de este radica en que es lo que permite identificar las variables más relevantes que contribuyen  a explicar la variabilidad en la variable dependiente. Basicamente, al seleccional personalmente los subconjuntos de variables independientes, lo que estamos haciendo es simplificar el modelo evitando la inclusion de variables redundantes o no utiles, mejorando y facilitando así la interpretabilidad del modelo. 
+
 ##14.Dígame una estrategia eficaz en el contexto de “Subset Selection”.
 ##15.Defina “modelo anidado”.
 ##16.¿Qué es una iteración?
