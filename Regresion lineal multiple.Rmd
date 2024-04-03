@@ -21,16 +21,6 @@ spear<- as.data.frame(read_excel("C:/Regresion lineal multiple/spear.xlsx"))
 
 ##2.Realice un análisis exploratorio de las variables. Comente brevemente los resultados. (NI PUTA IDEA TT)
 ```{r echo=TRUE}
-options(scipen = 999)
-library(dplyr)
-library(ggplot2) 
-library(readxl)
-library(gmodels)
-library(Hmisc)
-library(ggthemes)
-library(tidyverse)
-library(datos)
-library(tidyr)
 
 spear <- data.frame(
   id = 1:10,
@@ -42,7 +32,43 @@ spear <- data.frame(
   Maxwit = c(45.000, 49.320, 51.120, 53.280, 42.480, 37.440, 53.136, 61.560, 53.784, 55.080),
   Weight = c(4.752, 9.576, 6.912, 7.776, 3.528, 2.376, 8.424, 9.072, 11.664, 7.344))
 
-#Preguntas para el estudios: ¿Qué tipo de variación existe dentro de cada una de mis variables?¿Qué tipo de covariación ocurre entre mis diferentes variables?
+1.PRUEBA DE NORMALIDAD SHAPIRO-WILK
+shapiro.test(spear$Maxle)
+shapiro.test(spear$Socle)
+shapiro.test(spear$Maxwi)
+shapiro.test(spear$Upsoc)
+shapiro.test(spear$Losoc)
+shapiro.test(spear$Maxwit)
+shapiro.test(spear$Weight)
+
+Si el valor p es mayor que el nivel de significancia (generalmente 0.05), no hay evidencia suficiente para rechazar la hipótesis nula, lo que sugiere que los datos pueden seguir una distribución normal. De lo contrario, si el valor p es menor que el nivel de significancia, como es el caso de la variable Maxle unicamente, se rechaza la hipótesis nula, lo que indica que los datos no siguen una distribución normal.
+
+2.GRAFICOS DE DISTRIBUCION
+
+hist(spear$Maxle, main = "Histograma de Maxle", xlab = "Maxle")
+hist(spear$Socle, main = "Histograma de Socle", xlab = "Socle")
+hist(spear$Maxwi, main = "Histograma de Maxwi", xlab = "Maxwi")
+hist(spear$Maxwit, main = "Histograma de Maxwit", xlab = "Maxwit")
+hist(spear$Upsoc, main = "Histograma de Upsoc", xlab = "Upsoc")
+hist(spear$Losoc, main = "Histograma de Losoc", xlab = "Losoc")
+hist(spear$Weight, main = "Histograma de Weight", xlab = "Weight")
+
+En los graficos no se llega a visualizar si poseen un patron o no, por ende, por este metodo se hace complicado establecer la distribucion de las variables.
+
+3.MATRIZ DE CORRELACION
+
+correlacion <- cor(spear)
+
+print(correlacion)
+
+En este caso, las variables con valor cercano a 1 indica una correlación positiva fuerte, mientras que un valor cercano a -1 indica una correlación negativa. 
+
+library(corrplot)
+corrplot(correlacion, method = "circle")
+
+#Preguntas para el estudio: ¿Qué tipo de variación existe dentro de cada una de mis variables?¿Qué tipo de covariación ocurre entre mis diferentes variables?
+
+
 #Distribucion en diagrama de cajas
 
 spear_long <- gather(spear, key = "Variable", value = "Valor", -id)
@@ -106,7 +132,58 @@ ggplot(spear, aes(x = !!as.symbol("Weight"))) +
 
 ```
 
-##3.Verifique los supuestos que han de cumplir las variables implicadas en un análisis de la regresión lineal múltiple. Comente los resultados. (NI PUTA IDEA TT)
+##3.Verifique los supuestos que han de cumplir las variables implicadas en un análisis de la regresión lineal múltiple. Comente los resultados. 
+```{r echo=TRUE}
+1.Prueba de linealidad: Grafico de dispersion
+
+plot(spear$Socle, spear$Maxle, xlab = "Socle", ylab = "Maxle", main = "LINEALIDAD")
+abline(lm(Maxle ~ Socle, data = spear), col = "red")  
+
+plot(spear$Socle, spear$Maxwi, xlab = "Socle", ylab = "Maxwi", main = "LINEALIDAD")
+abline(lm(Maxle ~ Socle, data = spear), col = "purple")  
+
+plot(spear$Socle, spear$Upsoc, xlab = "Socle", ylab = "Upsoc", main = "LINEALIDAD")
+abline(lm(Maxle ~ Socle, data = spear), col = "green")  
+
+plot(spear$Socle, spear$Losoc, xlab = "Socle", ylab = "Losoc", main = "LINEALIDAD")
+abline(lm(Maxle ~ Socle, data = spear), col = "black") 
+
+plot(spear$Socle, spear$Maxwit, xlab = "Socle", ylab = "Maxwit", main = "LINEALIDAD")
+abline(lm(Maxle ~ Socle, data = spear), col = "orange")  
+
+plot(spear$Socle, spear$Weight, xlab = "Socle", ylab = "Weight", main = "LINEALIDAD")
+abline(lm(Maxle ~ Socle, data = spear), col = "pink")  
+
+2.Prueba de normalidad de los residuos: Ajustar el modelo de regresión lineal múltiple
+modelo <- lm(Maxle ~ Socle + Maxwi + Upsoc + Losoc + Maxwit + Weight, data = spear)
+
+3.Obtiene los residuos del modelo
+residuos <- resid(modelo)
+
+4.Prueba de Shapiro-Wilk para normalidad de los residuos
+shapiro.test(residuos)
+
+5.Gráfico Q-Q de los residuos
+qqnorm(residuos)
+qqline(residuos)
+
+6.Prueba de homocedasticidad:Gráfico de residuos estandarizados contra valores ajustados
+plot(fitted(modelo), rstandard(modelo), xlab = "Valores ajustados", ylab = "Residuos estandarizados", main = "Residuos vs Valores ajustados")
+
+Prueba de Breusch-Pagan para homocedasticidad
+library(lmtest)
+bptest(modelo)
+
+7.Prueba de independencia de los residuos: Gráfico de autocorrelación de los residuos
+acf(residuos)
+
+Prueba de Durbin-Watson para independencia de los residuos
+durbinWatsonTest(modelo)
+
+
+```
+El modelo cumple la regresion lineal, sin embargo solamente no cumple con la linealidad ya que el patron de las variables es bastante dispersos, sin embargo, el patron de residuos es correcto ya que adopta la forma de una linea diagonal y su p-value es mayor a 0,05. Igualmente, presenta homocedasticidad al ser el resultado del test un p-value mayor a 0,05. En la Autocorrelacion D-W sugiere la presencia de autocorrelación positiva aunque la prueba no es significativa debido a que el p-valor asociado no es menor que el nivel de significancia usual de 0.05.
+
 ##4.Visualice la distribución de frecuencia de las variables.
 ```{r echo=TRUE}
 frecuencia <- gather(spear, key = "Variable", value = "Valor", -id)
