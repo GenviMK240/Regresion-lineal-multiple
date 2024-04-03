@@ -19,7 +19,7 @@ spear<- as.data.frame(read_excel("C:/Regresion lineal multiple/spear.xlsx"))
   spear
 ```
 
-##2.Realice un análisis exploratorio de las variables. Comente brevemente los resultados.
+##2.Realice un análisis exploratorio de las variables. Comente brevemente los resultados. (NI PUTA IDEA TT)
 ```{r echo=TRUE}
 options(scipen = 999)
 library(dplyr)
@@ -106,7 +106,7 @@ ggplot(spear, aes(x = !!as.symbol("Weight"))) +
 
 ```
 
-##3.Verifique los supuestos que han de cumplir las variables implicadas en un análisis de la regresión lineal múltiple. Comente los resultados.
+##3.Verifique los supuestos que han de cumplir las variables implicadas en un análisis de la regresión lineal múltiple. Comente los resultados. (NI PUTA IDEA TT)
 ##4.Visualice la distribución de frecuencia de las variables.
 ```{r echo=TRUE}
 frecuencia <- gather(spear, key = "Variable", value = "Valor", -id)
@@ -405,7 +405,7 @@ coeficientes <- coef(modelo_plano_regresion)
  plano_regresion <- rgl::planes3d(coeficientes[2], coeficientes[3], -1, coeficientes[1], alpha = 0.5, color = "blue")
  print(plano_regresion)
 ```
-##26. Valide la robustez del modelo lineal.
+##26. Valide la robustez del modelo lineal. (NI PUTA IDEA TT)
 ```{r}
 1. Análisis de residuos
 Grafico de residuos vs valores ajustados con un histograma donde se muestren dichos residuos
@@ -439,8 +439,47 @@ print(summary(modelo_vc))
 summary(modelo)
 
 ```
-##27.Verifique que se cumplen las condiciones del modelo de regresión lineal múltiple. Justifique su respuesta.
+##27.Verifique que se cumplen las condiciones del modelo de regresión lineal múltiple. Justifique su respuesta. 
+Para ello mi modelo debe cumplir con los siguientes supuestos:
+
+-   Linealidad: la relación entre las variables independientes y la variable dependiente es lineal.
+```{r echo=TRUE}
+ggplot(modelo, aes(x = Socle, y = Maxle)) +
+  geom_point() +
+  labs(x = "Socle", y = "Maxle") +
+  ggtitle("Gráfico de dispersión de Socle vs. Maxle")
+```
+
+-   Independencia de los residuos: Los residuos del modelo deben ser independientes entre sí. No debe haber patrones discernibles en los residuos cuando se comparan con las variables independientes.
+```{r}
+residuos_estandarizados <- rstandard(modelo)
+plot(seq_along(residuos), residuos_estandarizados, 
+     xlab = "Orden de observaciones", ylab = "Residuos estandarizados",
+     main = "Independencia de los residuos")
+```
+-   Homocedasticidad: La variabilidad de los residuos debe ser constante en todos los niveles de las variables independientes.
+```{r echo=TRUE}
+valores_ajustados <- fitted(modelo)
+plot(valores_ajustados, residuos_estandarizados,
+     xlab = "Valores ajustados", ylab = "Residuos estandarizados",
+     main = "Homocedasticidad de los residuos")
+```
+
+-   Normalidad de los residuos: Los residuos del modelo deben seguir una distribución normal. 
+```{r echo=TRUE}
+qqnorm(residuos, main = "QQ plot de los residuos")
+qqline(residuos)
+```
+Parece ser que nuestro modelo cumple con la condiciones a excepcion de la linealidad, al fin y al cabo nuestras variables en la gráfica presenta una distribucion aleatoria, en cambio, posee homocedasticidad, la distribucion de los residuos es correcta, ya que no posee ningun patron en concreto, y los residuos estan normalizados, porque observamos en el grafico que los puntos siguen prácticamente una linea en diagonal.
+
 ##28.¿Emplearía el Factor de Inflación de la Varianza para verificar alguno de las condiciones? Si es así diga cual.
+Sí, el Factor de Inflación de la Varianza se emplea para verificar la presencia de multicolinealidad entre los predictores en el modelo de regresión lineal múltiple, por ende, se utiliza para verificar la independencia de los predictores en el modelo. Si el VIF es alto para alguno de los predictores, indica que esa variable está altamente correlacionada con otras variables predictoras, lo que sugiere la presencia de multicolinealidad.
+```{r echo=TRUE}
+library(car)
+vif_modelo <- vif(modelo)
+
+vif_modelo
+```
 ##29.Defina parsimonia.
 La parsimonia hace referencia a que el mejor modelo es aquel capaz de explicar con mayor precisión la variabilidad  en la variable respuesta empleando empleando la menor cantidad posible de asunciones.
 ##30.Verifique la normalidad de los residuos. Dígame la diferencia entre residuos, residuos estandarizados y residuos estudentizados.
@@ -468,13 +507,94 @@ library(lmtest)
 breusch_test <- lmtest::bptest(modelo)
 print(breusch_test)
 ```
-
 ##32.Verifique si existen o no observaciones influyentes.
-##33.Diferencia entre observación atípica y observación que produzca “apalancamiento” del modelo.
-##34.Calcule la distancia de Cook. ¿Cómo viene expresada? ¿Cómo la interpretaría?
-##35.¿Qué valores hat superan la media?
-##36.¿Como calcularía el límite hat que determina que observaciones son influyentes?
-##37.Elimine las observaciones influyentes del modelo y repetir todo el proceso comprobando el peso de esta observación en la regresión lineal. Comente brevemente los resultados.
-```{r}
+Podemos hacerlo a traves del caculo del leverage, ya que si en este resulta en valores altos, podremos decir que existen valores inflyentes.
+```{r echo=TRUE}
+
+leverage <- hatvalues(modelo)
+leverage
+
+promedio_leverage <- mean(leverage)
+promedio_leverage
+
+observaciones_influyentes <- which(leverage > 2 * promedio_leverage)
+observaciones_influyentes
 
 ```
+Al darnos el resultado named integer (0) esto significa que no existen observaciones influyentes ya que ninguna de ellas supera el doble del promedio de leverage.
+
+##33.Diferencia entre observación atípica y observación que produzca “apalancamiento” del modelo.
+-   Observación atípica: Se refiere a un punto de datos que se aleja notablemente del patrón general de los demás datos en el conjunto. Pueden tener impacto en los resultados de los análisis y pueden distorsionar la estimación de los parámetros del modelo. Suelen ser resultado de errores en la medición o en la recopilación de datos.
+
+-   Observación de apalancamiento: Se refiere a una observación que tiene un valor inusualmente alto o bajo en una o más variables predictoras en comparación con las demás observaciones del conjunto de datos. Impactan en la estimación de los coeficientes del modelo y pueden influir en la forma de la línea de regresión. 
+
+##34.Calcule la distancia de Cook. ¿Cómo viene expresada? ¿Cómo la interpretaría?
+```{r echo=TRUE}
+Calcular los valores predichos y residuos
+
+spear$predichos <- predict(modelo)
+spear$residuos <- residuals(modelo)
+
+Calcular la varianza del error
+var_error <- deviance(modelo) / modelo$df.residual
+
+Calcular los residuos estandarizados y el apalancamiento
+spear$residuos_estandarizados <- rstandard(modelo)
+spear$leverage <- hatvalues(modelo)
+
+Calcular la distancia de Cook para cada observación
+var_error <- deviance(modelo) / modelo$df.residual
+spear$cook <- with(spear, (residuos_estandarizados^2) / (2 * var_error * (1 + leverage)^2))
+
+Mostrar el resultado
+print(spear$cook)
+
+```
+Los valores más altos de la distancia de Cook, como 0.1688749231 y 0.1146946958, sugieren que las observaciones correspondientes tienen una influencia relativamente alta en los parámetros del modelo. Esto significa que si se eliminan esas observaciones, los coeficientes del modelo pueden cambiar significativamente.
+##35.¿Qué valores hat superan la media?
+```{r echo=TRUE}
+leverage_media <- mean(leverage)
+
+leverage_media_mayor <- leverage[leverage > leverage_media]
+
+leverage_media_mayor
+```
+##36.¿Como calcularía el límite hat que determina que observaciones son influyentes?
+```{r echo=TRUE}
+- Número de observaciones
+n_observaciones <- nrow(spear)
+
+- Número de predictores en el modelo, incluyendo la constante
+predictores <- 6  
+
+- Cálculo del límite HAT
+hat_limit <- 2 * (predictores + 1) / n
+
+hat_limit
+
+```
+
+##37.Elimine las observaciones influyentes del modelo y repetir todo el proceso comprobando el peso de esta observación en la regresión lineal. Comente brevemente los resultados.
+En el caso de nuestro modelo, ninguno de los valores está por encima de un umbral típicamente utilizado para considerar una observación como influyente (usualmente 4/n, donde n es el número de observaciones). Sin embargo, dado que la observación 1 tiene un valor de Cook de NaN, podríamos considerarla como potencialmente influyente y eliminarla del conjunto de datos.
+
+Voy a eliminar la primera observación y ajustar nuevamente el modelo para ver cómo cambian los resultados.
+```{r}
+#Eliminar la primera observación
+spear_subset <- spear[-1, ]
+
+# Ajustar el modelo nuevamente
+modelo_sin_influyentes <- lm(Maxle ~ Socle + Maxwi + Upsoc + Losoc + Maxwit + Weight, data = spear_subset)
+
+# Ver los resultados del nuevo modelo
+summary(modelo_sin_influyentes)
+
+```
+Después de eliminar la observación que se consideró influyente, observamos varios cambios en los resultados del modelo:
+
+Los coeficientes de regresión para las variables "Socle", "Maxwi", y "Upsoc" mantienen sus signos y magnitudes similares a los del modelo original, aunque el coeficiente de "Socle" ahora es ligeramente menor.
+
+El coeficiente de regresión para la variable "Losoc" no está definido debido a singularidades en los datos después de eliminar la observación influyente. Esto puede deberse a una alta correlación entre "Losoc" y otras variables en el modelo.
+
+Las métricas de ajuste del modelo, como el error estándar residual y el R cuadrado ajustado, muestran cambios. El error estándar residual se ha reducido, lo que sugiere un mejor ajuste del modelo a los datos restantes. Sin embargo, el R cuadrado ajustado también se ha reducido, lo que indica que el modelo explica una menor proporción de la variabilidad en los datos después de eliminar la observación influyente.
+
+En resumen, la eliminación de la observación influyente ha afectado los resultados del modelo, aunque algunos coeficientes y métricas de ajuste permanecen relativamente similares.
